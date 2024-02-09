@@ -1,0 +1,23 @@
+{
+  "name": "@lordfokas/event-bus",
+  "version": "1.0.0",
+  "description": "An async class-based event bus in Typescript with event inheritance features. Heavily inspired by MinecraftForge's EventBus.",
+  "repository": "https://github.com/LordFokas/event-bus",
+  "main": "index.js",
+  "scripts": {
+    "prebuild": "rm -rf ./dist",
+    "build": "tsc -p ./tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "async",
+    "event",
+    "event-bus",
+    "typescript"
+  ],
+  "author": "LordFokas",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

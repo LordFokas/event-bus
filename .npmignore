@@ -1,0 +1,8 @@
+/examples
+/docs
+/src
+
+tsconfig.json
+
+*.log
+*.code-workspace
