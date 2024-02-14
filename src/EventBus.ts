@@ -1,27 +1,27 @@
 import { Event, EventConsumer } from "./Event.js";
 import { EventListener, Nice } from "./EventListener.js";
 
+export const root = Symbol();
+
 export class EventBus {
     /** The global, application-wide EventBus. */
     static readonly GLOBAL = new EventBus("global");
 
     /** List of listeners for each event type */
-    private readonly channels = {
-        // Make sure Event base class exists at all times to kill recursion here.
-        [Event.key()]: [] as EventListener<any>[]
-    };
+    private readonly channels = {} as Record<symbol, EventListener<any>[]>;
 
     /** List of own key and all ancestor keys for each event type */
-    private readonly hierarchy = {
-        // Make sure Event base class exists at all times to kill recursion here.
-        [Event.key()]: [Event.key()]
-    };
+    private readonly hierarchy = {} as Record<symbol, symbol[]>;
 
     private log : EventConsumer<any> = (_:any) => {};
     readonly name: string;
 
     constructor(name: string){
-        this. name = name;
+        this.name = name;
+
+        // Make sure Event base class exists at all times to kill recursion here.
+        this.channels[root] = [];
+        this.hierarchy[root] = [root];
     }
 
     /** Sets the debug logger to use internally */

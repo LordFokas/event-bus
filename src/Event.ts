@@ -1,15 +1,13 @@
-import { EventBus } from "./EventBus.js";
+import { EventBus, root } from "./EventBus.js";
 import { EventListener } from "./EventListener.js";
 
 const $ = Symbol('$');
 const key = Symbol('key');
-const keys = Symbol('keys');
 
 export type EventConsumer<T extends Event> = (evt:T) => void;
 
 export class Event {
-    private static [key] = Symbol();
-    private static [keys] = [ this[key] ];
+    private static [key] = root;
     private readonly [$]: EventState;
 
     /** Get the key Symbol for this event. Used as a key in the EventBus. */
