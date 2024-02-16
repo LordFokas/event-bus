@@ -12,8 +12,8 @@ export class Event {
 
     /** Get the key Symbol for this event. Used as a key in the EventBus. */
     static key(){
-        if(!this[key]){
-            this[key] = Symbol();
+        if(!Object.hasOwn(this, key)){
+            this[key] = Symbol(this.name);
         }
         return this[key];
     }
@@ -22,9 +22,6 @@ export class Event {
         return (this.constructor as typeof Event).key();
     }
 
-    private promise: Promise<Event>;
-    private resolver: (success: boolean) => void;
-
     constructor(){
         Object.defineProperty(this, $, {
 			writable: false,
@@ -32,15 +29,19 @@ export class Event {
 			enumerable: false,
 			value: new EventState({
 				status: EventStatus.RUNNING,
+                parent: undefined,
+                reason: undefined,
 				deliveries: [],
 				depth: 0,
-				bus: EventBus.GLOBAL
+				bus: EventBus.GLOBAL,
+                promise: undefined as any,
+                settler: undefined as any
 			})
 		});
 
-        this.promise = new Promise((resolve, reject) => {
-            this.resolver = success => success ? resolve(this) : reject(this[$].reason);
-        });
+        this[$].promise = new Promise((resolve, reject) => {
+            this[$].settler = success => success ? resolve(this) : reject(this[$].reason);
+        })
     }
 
     /** Assign all data from the passed in objects to the event. Chainable. */
@@ -91,7 +92,7 @@ export class Event {
 
     /** Get this event's promise. */
     resolution(){
-        return this.promise as Promise<this>;
+        return this[$].promise as Promise<this>;
     }
 
     /** Mark this event as finished. Used by the EventBus. Resolves the event's promise. */
@@ -99,7 +100,7 @@ export class Event {
         if(!this[$].status.finished){
             this[$].status = EventStatus.FINISHED;
         }
-        this.resolver(!this[$].status.aborted);
+        this[$].settler(!this[$].status.aborted);
     }
 
     /** Abort this event. This halts processing due to an error condition. */
@@ -169,6 +170,10 @@ class EventState {
     deliveries: EventListener<any>[];
     /** The event bus to process this event. Defaults to EventBus.GLOBAL */
     bus: EventBus;
+    /** The promise on this event's completion */
+    promise: Promise<Event>;
+    /** Function that settles (resolves or rejects) the promise on this event's completion */
+    settler: (success: boolean) => void;
 
     constructor(obj: EventState){
         for(const key of Object.keys(obj)){
@@ -179,7 +184,6 @@ class EventState {
 				value: (obj as Record<string, any>)[key]
 			});
 		}
-		Object.seal(this);
     }
 }
 

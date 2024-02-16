@@ -1,7 +1,7 @@
 import { Event, EventConsumer } from "./Event.js";
 import { EventListener, Nice } from "./EventListener.js";
 
-export const root = Symbol();
+export const root = Symbol("Event [root]");
 
 export class EventBus {
     /** The global, application-wide EventBus. */
@@ -48,7 +48,6 @@ export class EventBus {
     subscribe<T extends typeof Event>(type: T, listener: EventListener<InstanceType<T>>){
         const key = type.key();
         if(!this.channels[key]){
-            this.channels[key] = [];
             this.calculate(key, type);
         }else if(this.channels[key].includes(listener)){
             throw new Error("Cannot add a listener twice to the same channel!");
@@ -71,15 +70,21 @@ export class EventBus {
     private calculate<E extends typeof Event>(key: symbol, event: E){
         if(this.hierarchy[key]) return; // Skip computation if node already exists.
 
-        const superEvent = event.prototype; // Get parent event class
+        const superEvent = Object.getPrototypeOf(event.prototype).constructor; // Get parent event class
+        if(!superEvent.key) superEvent.key = Event.key;
         const superKey = superEvent.key();
         if(!this.hierarchy[superKey]){ // If parent doesn't have key set
-            this.calculate(superKey, Event); // Recursively calculate missing ancestor key sets
+            this.calculate(superKey, superEvent); // Recursively calculate missing ancestor key sets
         }
 
         // Our key set is our key and the set of keys of our ancestors
         // So our list is just our own key and the list of keys on our parent
-        this.hierarchy[key] = [ key, ...this.hierarchy[superKey] ];
+        this.hierarchy[key] = [ ...this.hierarchy[superKey], key ];
+        
+        // Make sure a channel for this type exists at all times
+        if(!this.channels[key]){
+            this.channels[key] = [];
+        }
     }
 
     /**

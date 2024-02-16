@@ -12,8 +12,8 @@ export class EventListener<T extends Event> {
 		this.name = null;
 		this.owner = null;
 		this.callback = callback;
-		if(nice < -Nice.MIN_VALUE || nice > Nice.MAX_VALUE){
-			throw new Error("Constraint Violated: -20k <= nice <= 20k");
+		if(nice < Nice.MIN_VALUE || nice > Nice.MAX_VALUE){
+			throw new Error(`Constraint Violated: ${Nice.MIN_VALUE} <= nice(${nice}) <= ${Nice.MAX_VALUE}`);
 		}
 		this._nice = nice;
 	}
