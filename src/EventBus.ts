@@ -3,6 +3,8 @@ import { EventListener, Nice } from "./EventListener.js";
 
 export const root = Symbol("Event [root]");
 
+const EMPTY = [] as any[];
+
 export class EventBus {
     /** The global, application-wide EventBus. */
     static readonly GLOBAL = new EventBus("global");
@@ -48,6 +50,7 @@ export class EventBus {
     subscribe<T extends typeof Event>(type: T, listener: EventListener<InstanceType<T>>){
         const key = type.key();
         if(!this.channels[key]){
+            this.channels[key] = [];
             this.calculate(key, type);
         }else if(this.channels[key].includes(listener)){
             throw new Error("Cannot add a listener twice to the same channel!");
@@ -80,11 +83,6 @@ export class EventBus {
         // Our key set is our key and the set of keys of our ancestors
         // So our list is just our own key and the list of keys on our parent
         this.hierarchy[key] = [ ...this.hierarchy[superKey], key ];
-        
-        // Make sure a channel for this type exists at all times
-        if(!this.channels[key]){
-            this.channels[key] = [];
-        }
     }
 
     /**
@@ -98,8 +96,8 @@ export class EventBus {
             throw new Error("This event has already been processed!");
         }
         const key = event.key();
-        this.hierarchy[key] // Get all supertype and own keys
-            .map(k => this.channels[k]) // Get all listeners for every key
+        (this.hierarchy[key] ?? EMPTY) // Get all supertype and own keys
+            .map(k => this.channels[k] ?? EMPTY) // Get all listeners for every key
             .flat() // Flatten listener[][] into listener[]
             .sort((a, b) => a.nice() - b.nice()) // Order listeners by nice, ascending.
             .some(l => this.execute(l, event)); // Execute listeners in order until one execute() returns true.
